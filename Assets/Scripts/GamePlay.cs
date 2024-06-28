@@ -43,6 +43,9 @@ public class GamePlay : MonoBehaviour
 
     public GameObject m_RainEffect = null;
 
+    Quaternion m_QtH = Quaternion.identity;
+    Quaternion m_QtV = Quaternion.identity;
+
     public static GamePlay m_Instance = null;
 
     void Awake()
@@ -108,15 +111,22 @@ public class GamePlay : MonoBehaviour
             //
             m_ImageCarParkOn.color = Color.white;
             m_ImageJangOn.color = m_HideColor;
+            //
+            m_QtV = Quaternion.identity;
+            m_QtH = Quaternion.identity;
         }
         else
         {
-            m_OVRCameraRig.transform.localRotation = Quaternion.Euler(0, 160, 0);
+            Quaternion qt = Quaternion.Euler(0, 160, 0);
+            m_OVRCameraRig.transform.localRotation = qt;
             m_Cylinder.transform.localRotation = Quaternion.Euler(0, 180, 0);
 
             //
             m_ImageCarParkOn.color = m_HideColor;
             m_ImageJangOn.color = Color.white;
+            //
+            m_QtV = Quaternion.identity;
+            m_QtH = qt;
         }
     }
 
@@ -132,6 +142,50 @@ public class GamePlay : MonoBehaviour
         m_InfoPanels.SetActive(false);
     }
 
+    public void ClickProc(string str)
+    {
+        //string str = gameObject.name;
+
+        if (str == "ButtonCarPark")
+        {
+            GamePlay.m_Instance.ChangeLocation(true);
+        }
+        if (str == "ButtonJang")
+        {
+            GamePlay.m_Instance.ChangeLocation(false);
+        }
+
+        //
+        if (str == "ButtonWaterLevel1")
+        {
+            GamePlay.m_Instance.ChangeWaterLevel(0);
+        }
+        if (str == "ButtonWaterLevel2")
+        {
+            GamePlay.m_Instance.ChangeWaterLevel(1);
+        }
+        if (str == "ButtonWaterLevel3")
+        {
+            GamePlay.m_Instance.ChangeWaterLevel(2);
+        }
+        if (str == "ButtonWaterLevel4")
+        {
+            GamePlay.m_Instance.ChangeWaterLevel(3);
+        }
+
+        //
+        if (str == "ButtonShowInfo")
+        {
+            GamePlay.m_Instance.OnButtonShowInfo();
+        }
+        if (str == "ButtonCloseInfo")
+        {
+            GamePlay.m_Instance.OnButtonCloseInfo();
+        }
+
+        //gameObject.SetActive(false);
+    }
+
     void WaterPositionProc()
     {
         m_WaterPlane.transform.position = Vector3.SmoothDamp(m_WaterPlane.transform.position, m_WaterPosition, ref m_Velocity, m_SmoothTime);
@@ -140,9 +194,46 @@ public class GamePlay : MonoBehaviour
         m_RainEffect.transform.position = pos;
     }
 
+    void CameraRotate()
+    {
+        Vector2 delta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
+        //Debug.Log("delta= " + delta);
+        Quaternion qt = Quaternion.Euler(0, delta.x * 0.2f, 0);
+        m_QtH = qt * m_QtH;
+
+        qt = Quaternion.Euler(delta.y * -0.2f, 0, 0);
+        m_QtV = qt * m_QtV;
+        m_OVRCameraRig.transform.rotation = m_QtH * m_QtV;
+    }
+
+    void GetKeyProc()
+    {
+        string s = "";
+        if (UnityEngine.InputSystem.Keyboard.current.digit1Key.wasPressedThisFrame) s = "ButtonWaterLevel1";
+        if (UnityEngine.InputSystem.Keyboard.current.digit2Key.wasPressedThisFrame) s = "ButtonWaterLevel2";
+        if (UnityEngine.InputSystem.Keyboard.current.digit3Key.wasPressedThisFrame) s = "ButtonWaterLevel3";
+        if (UnityEngine.InputSystem.Keyboard.current.digit4Key.wasPressedThisFrame) s = "ButtonWaterLevel4";
+
+        if (UnityEngine.InputSystem.Keyboard.current.digit5Key.wasPressedThisFrame) s = "ButtonCarPark";
+        if (UnityEngine.InputSystem.Keyboard.current.digit6Key.wasPressedThisFrame) s = "ButtonJang";
+
+        if (UnityEngine.InputSystem.Keyboard.current.digit7Key.wasPressedThisFrame) s = "ButtonShowInfo";
+        if (UnityEngine.InputSystem.Keyboard.current.digit8Key.wasPressedThisFrame) s = "ButtonCloseInfo";
+
+        //
+        if (string.IsNullOrEmpty(s) == false)
+        {
+            ClickProc(s);
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
         WaterPositionProc();
+#if UNITY_EDITOR
+        CameraRotate();
+        GetKeyProc();
+#endif
     }
 }
